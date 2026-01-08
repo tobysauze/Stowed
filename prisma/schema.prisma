@@ -1,0 +1,169 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  admin
+  engineer
+  stew
+  deck
+  readonly
+}
+
+model AppUser {
+  id        String   @id @default(uuid()) @db.Uuid
+  email     String   @unique
+  fullName  String?  @map("full_name")
+  role      UserRole @default(readonly)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  itemsCreated Item[] @relation("ItemCreatedBy")
+  auditLogs    AuditLog[]
+
+  @@map("app_user")
+}
+
+model Category {
+  id        BigInt    @id @default(autoincrement()) @db.BigInt
+  name      String
+  parentId  BigInt?   @map("parent_id") @db.BigInt
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  parent   Category?  @relation("CategoryToCategory", fields: [parentId], references: [id], onDelete: SetNull)
+  children Category[] @relation("CategoryToCategory")
+  items    Item[]
+
+  @@index([parentId])
+  @@map("category")
+}
+
+model Location {
+  id        BigInt    @id @default(autoincrement()) @db.BigInt
+  name      String
+  parentId  BigInt?   @map("parent_id") @db.BigInt
+  // We store the ltree text in Postgres. Prisma doesn't have a native ltree type.
+  path      String?
+  notes     String?
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  parent   Location?  @relation("LocationToLocation", fields: [parentId], references: [id], onDelete: SetNull)
+  children Location[] @relation("LocationToLocation")
+  stock    Stock[]
+
+  @@index([parentId])
+  @@map("location")
+}
+
+model Item {
+  id          BigInt    @id @default(autoincrement()) @db.BigInt
+  sku         String?   @unique
+  manufacturer String?
+  mfgPartNo   String?   @map("mfg_part_no")
+  name        String
+  description String?
+  unit        String    @default("ea")
+
+  categoryId  BigInt?   @map("category_id") @db.BigInt
+  barcode     String?
+  minRequired Decimal   @default(0) @map("min_required") @db.Decimal(12, 3)
+
+  createdById String?   @map("created_by") @db.Uuid
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  category    Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  createdBy   AppUser?  @relation("ItemCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  stock       Stock[]
+  attachments Attachment[]
+  suppliers   ItemSupplier[]
+
+  @@index([categoryId])
+  @@index([barcode])
+  @@map("item")
+}
+
+model Stock {
+  id         BigInt   @id @default(autoincrement()) @db.BigInt
+  itemId     BigInt   @map("item_id") @db.BigInt
+  locationId BigInt   @map("location_id") @db.BigInt
+  qtyOnHand  Decimal  @default(0) @map("qty_on_hand") @db.Decimal(12, 3)
+  updatedAt  DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  item     Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  location Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+
+  @@unique([itemId, locationId])
+  @@index([locationId])
+  @@index([itemId])
+  @@map("stock")
+}
+
+model Attachment {
+  id        BigInt   @id @default(autoincrement()) @db.BigInt
+  itemId    BigInt?  @map("item_id") @db.BigInt
+  fileUrl   String   @map("file_url")
+  type      String   @default("photo")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  item Item? @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@index([itemId])
+  @@map("attachment")
+}
+
+model Supplier {
+  id        BigInt   @id @default(autoincrement()) @db.BigInt
+  name      String
+  email     String?
+  phone     String?
+  url       String?
+  notes     String?
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  items ItemSupplier[]
+
+  @@map("supplier")
+}
+
+model ItemSupplier {
+  id          BigInt   @id @default(autoincrement()) @db.BigInt
+  itemId      BigInt?  @map("item_id") @db.BigInt
+  supplierId  BigInt?  @map("supplier_id") @db.BigInt
+  supplierSku String?  @map("supplier_sku")
+  price       Decimal? @db.Decimal(12, 2)
+  currency    String   @default("EUR")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  item     Item?     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  supplier Supplier? @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+
+  @@index([itemId])
+  @@index([supplierId])
+  @@map("item_supplier")
+}
+
+model AuditLog {
+  id        BigInt   @id @default(autoincrement()) @db.BigInt
+  userId    String?  @map("user_id") @db.Uuid
+  entity    String
+  entityId  BigInt   @map("entity_id") @db.BigInt
+  action    String
+  field     String?
+  oldValue  String?  @map("old_value")
+  newValue  String?  @map("new_value")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user AppUser? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([entity, entityId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("audit_log")
+}
+
+
