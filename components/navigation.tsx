@@ -13,8 +13,14 @@ const navItems = [
   { href: '/menu', label: 'Menu', icon: Menu },
 ]
 
+const HIDDEN_ON = ['/login', '/signup', '/auth']
+
 export function BottomNav() {
   const pathname = usePathname()
+
+  if (pathname && HIDDEN_ON.some((p) => pathname === p || pathname.startsWith(p + '/'))) {
+    return null
+  }
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-gray-200 bg-white/95 backdrop-blur">
