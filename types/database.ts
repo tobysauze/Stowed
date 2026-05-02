@@ -119,7 +119,7 @@ export interface ItemWithDetails extends Item {
   category?: Category
   total_on_hand?: number
   reorder_deficit?: number
-  attachments?: Attachment[]
+  attachment?: Attachment[]
   stock?: Array<Stock & { location?: Location }>
 }
 
