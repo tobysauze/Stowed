@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 import { Category, Location } from '@/types/database'
 
 export default function NewLocationPage() {
@@ -42,7 +43,7 @@ export default function NewLocationPage() {
       router.push('/locations')
     } catch (error: any) {
       console.error('Error creating location:', error)
-      alert('Failed to create location: ' + error.message)
+      toast.error('Failed to create location: ' + error.message)
     } finally {
       setLoading(false)
     }

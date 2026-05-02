@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { X, Flashlight, RotateCcw, Settings } from 'lucide-react'
 import { TopBar } from '@/components/ui/TopBar'
+import { toast } from 'sonner'
 
 // Minimal barcode scanning using BarcodeDetector when available (Chrome/Edge/Android).
 // iOS Safari support is limited; in that case we fall back to manual entry.
@@ -132,7 +133,7 @@ export default function ScanPage() {
           </div>
           <div className="absolute left-3 top-16">
             <button
-              onClick={() => alert('Settings coming next')}
+              onClick={() => toast.info('Scanner settings — coming soon')}
               className="inline-flex items-center justify-center rounded-full bg-white/15 p-2 text-white"
               aria-label="Settings"
             >

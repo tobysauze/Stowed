@@ -3,8 +3,11 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 import { ItemWithDetails, Category, Location, Stock } from '@/types/database'
-import { Plus, Minus, Edit, Camera, MapPin } from 'lucide-react'
+import { Plus, Minus, Edit, Camera, MapPin, Trash2 } from 'lucide-react'
+import { Skeleton } from '@/components/ui/Skeleton'
+import { StockBadge } from '@/components/ui/StockBadge'
 
 export default function ItemDetailPage({ params }: { params: { id: string } }) {
   const router = useRouter()
@@ -84,7 +87,7 @@ export default function ItemDetailPage({ params }: { params: { id: string } }) {
       loadItem()
     } catch (error: any) {
       console.error('Error adjusting stock:', error)
-      alert('Failed to adjust stock: ' + error.message)
+      toast.error('Failed to adjust stock: ' + error.message)
     } finally {
       setAdjusting(false)
     }
@@ -101,12 +104,23 @@ export default function ItemDetailPage({ params }: { params: { id: string } }) {
       loadItem()
     } catch (error: any) {
       console.error('Error updating min required:', error)
-      alert('Failed to update minimum required: ' + error.message)
+      toast.error('Failed to update minimum required: ' + error.message)
     }
   }
 
   if (loading) {
-    return <div className="text-center py-12 text-gray-500">Loading...</div>
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-8 w-2/3" />
+        <Skeleton className="h-5 w-1/3" />
+        <Skeleton className="h-32 w-full" />
+        <div className="grid grid-cols-3 gap-4">
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-24 w-full" />
+        </div>
+      </div>
+    )
   }
 
   if (!item) {

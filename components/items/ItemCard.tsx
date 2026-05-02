@@ -1,8 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import { MoreHorizontal } from 'lucide-react'
+import { MoreHorizontal, Package } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { StockBadge } from '@/components/ui/StockBadge'
 
 export type ItemListRow = {
   id: number
@@ -10,6 +11,7 @@ export type ItemListRow = {
   sku: string | null
   unit: string
   total_on_hand: number
+  min_required?: number | null
   updated_at?: string
   thumb_url?: string | null
   tags?: string[]
@@ -28,8 +30,8 @@ export function ItemCard({
         {item.thumb_url ? (
           <img src={item.thumb_url} alt={item.name} className="h-full w-full object-cover" />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-xs text-gray-400">
-            No photo
+          <div className="flex h-full w-full items-center justify-center text-gray-300">
+            <Package className="h-6 w-6" />
           </div>
         )}
       </div>
@@ -39,9 +41,11 @@ export function ItemCard({
           <Link href={`/items/${item.id}`} className="min-w-0">
             <div className="truncate text-sm font-semibold text-gray-900">{item.name}</div>
             <div className="mt-1 flex items-center gap-2">
-              <span className="inline-flex items-center rounded-md bg-red-50 px-2 py-0.5 text-xs font-semibold text-red-700">
-                {item.total_on_hand} {item.unit}
-              </span>
+              <StockBadge
+                qty={item.total_on_hand}
+                unit={item.unit}
+                minRequired={item.min_required}
+              />
               {item.sku ? (
                 <span className="truncate text-xs text-gray-500">{item.sku}</span>
               ) : null}

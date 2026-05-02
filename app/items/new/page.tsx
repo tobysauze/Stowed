@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 import { Category, Location } from '@/types/database'
 import { Upload, X } from 'lucide-react'
 
@@ -94,7 +95,7 @@ export default function NewItemPage() {
       router.push(`/items/${item.id}`)
     } catch (error: any) {
       console.error('Error creating item:', error)
-      alert('Failed to create item: ' + error.message)
+      toast.error('Failed to create item: ' + error.message)
       setLoading(false)
     }
   }

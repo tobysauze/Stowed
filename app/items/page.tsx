@@ -2,11 +2,14 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { ChevronLeft, Plus, ScanLine, FolderPlus, ArrowUpDown, Search } from 'lucide-react'
+import { Plus, ScanLine, FolderPlus, ArrowUpDown, Search, Package } from 'lucide-react'
+import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase/client'
 import { TopBar } from '@/components/ui/TopBar'
 import { Fab } from '@/components/ui/Fab'
 import { BottomSheet } from '@/components/ui/BottomSheet'
+import { ItemRowSkeletonList } from '@/components/ui/Skeleton'
+import { EmptyState } from '@/components/ui/EmptyState'
 import { ItemCard, type ItemListRow } from '@/components/items/ItemCard'
 
 type SortMode = 'name' | 'updated'
@@ -42,7 +45,7 @@ export default function ItemsPage() {
         .from('item')
         .select(
           `
-          id, name, sku, unit, updated_at,
+          id, name, sku, unit, min_required, updated_at,
           stock (qty_on_hand),
           attachment (file_url, type)
         `
@@ -61,6 +64,7 @@ export default function ItemsPage() {
           name: it.name,
           sku: it.sku,
           unit: it.unit || 'ea',
+          min_required: it.min_required ?? 0,
           total_on_hand: totalOnHand,
           updated_at: it.updated_at,
           thumb_url: thumb || null,
@@ -69,8 +73,9 @@ export default function ItemsPage() {
       })
 
       setItems(mapped)
-    } catch (e) {
+    } catch (e: any) {
       console.error(e)
+      toast.error(e?.message || 'Failed to load items')
     } finally {
       setLoading(false)
     }
@@ -141,9 +146,13 @@ export default function ItemsPage() {
           </button>
         </div>
         {loading ? (
-          <div className="py-10 text-center text-gray-500">Loading…</div>
+          <ItemRowSkeletonList rows={5} />
         ) : items.length === 0 ? (
-          <div className="py-10 text-center text-gray-500">No items yet</div>
+          <EmptyState
+            icon={Package}
+            title="No items yet"
+            description="Tap the + button below to add your first item."
+          />
         ) : (
           items.map((it) => <ItemCard key={it.id} item={it} onOpenMenu={openItemMenu} />)
         )}
@@ -240,20 +249,33 @@ export default function ItemsPage() {
             History
           </Link>
           <button
-            className="w-full rounded-xl px-4 py-3 text-left text-sm font-medium text-gray-900 hover:bg-gray-50"
-            onClick={() => alert('Export coming next')}
+            className="w-full rounded-xl px-4 py-3 text-left text-sm font-medium text-gray-400"
+            onClick={() => toast.info('Export — coming soon')}
           >
             Export
           </button>
           <button
-            className="w-full rounded-xl px-4 py-3 text-left text-sm font-medium text-gray-900 hover:bg-gray-50"
-            onClick={() => alert('Clone coming next')}
+            className="w-full rounded-xl px-4 py-3 text-left text-sm font-medium text-gray-400"
+            onClick={() => toast.info('Clone — coming soon')}
           >
             Clone
           </button>
           <button
             className="w-full rounded-xl px-4 py-3 text-left text-sm font-medium text-red-600 hover:bg-red-50"
-            onClick={() => alert('Delete coming next')}
+            onClick={async () => {
+              if (!activeItem) return
+              const item = activeItem
+              setItemSheetOpen(false)
+              const ok = window.confirm(`Delete "${item.name}"? This cannot be undone.`)
+              if (!ok) return
+              const { error } = await supabase.from('item').delete().eq('id', item.id)
+              if (error) {
+                toast.error('Delete failed: ' + error.message)
+                return
+              }
+              toast.success(`Deleted "${item.name}"`)
+              setItems((prev) => prev.filter((i) => i.id !== item.id))
+            }}
           >
             Delete
           </button>

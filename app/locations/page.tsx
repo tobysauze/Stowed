@@ -5,6 +5,9 @@ import { supabase } from '@/lib/supabase/client'
 import { Location, LocationWithChildren } from '@/types/database'
 import Link from 'next/link'
 import { ChevronRight, Plus, Trash2, MapPin } from 'lucide-react'
+import { toast } from 'sonner'
+import { Skeleton } from '@/components/ui/Skeleton'
+import { EmptyState } from '@/components/ui/EmptyState'
 
 export default function LocationsPage() {
   const [locations, setLocations] = useState<LocationWithChildren[]>([])
@@ -69,7 +72,7 @@ export default function LocationsPage() {
       }
     } catch (error) {
       console.error('Error deleting location:', error)
-      alert('Failed to delete location. Make sure it has no items or child locations.')
+      toast.error('Failed to delete location. Make sure it has no items or child locations.')
     }
   }
 
@@ -125,9 +128,17 @@ export default function LocationsPage() {
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <h2 className="text-lg font-semibold mb-4">Location Tree</h2>
           {loading ? (
-            <div className="text-gray-500">Loading...</div>
+            <div className="space-y-2">
+              <Skeleton className="h-8 w-full" />
+              <Skeleton className="h-8 w-2/3" />
+              <Skeleton className="h-8 w-3/4" />
+            </div>
           ) : locations.length === 0 ? (
-            <div className="text-gray-500">No locations yet. Add your first location!</div>
+            <EmptyState
+              icon={MapPin}
+              title="No locations yet"
+              description="Add your first storage location — e.g. Engine Room or Galley."
+            />
           ) : (
             <LocationTree locs={locations} />
           )}

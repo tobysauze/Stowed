@@ -3,8 +3,11 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 import { Category } from '@/types/database'
-import { Plus, Trash2 } from 'lucide-react'
+import { Plus, Trash2, Tag } from 'lucide-react'
+import { EmptyState } from '@/components/ui/EmptyState'
+import { Skeleton } from '@/components/ui/Skeleton'
 
 export default function CategoriesPage() {
   const router = useRouter()
@@ -50,7 +53,7 @@ export default function CategoriesPage() {
       loadCategories()
     } catch (error: any) {
       console.error('Error creating category:', error)
-      alert('Failed to create category: ' + error.message)
+      toast.error('Failed to create category: ' + error.message)
     }
   }
 
@@ -67,7 +70,7 @@ export default function CategoriesPage() {
       loadCategories()
     } catch (error: any) {
       console.error('Error deleting category:', error)
-      alert('Failed to delete category: ' + error.message)
+      toast.error('Failed to delete category: ' + error.message)
     }
   }
 
@@ -155,10 +158,18 @@ export default function CategoriesPage() {
       )}
 
       {loading ? (
-        <div className="text-center py-12 text-gray-500">Loading...</div>
+        <div className="space-y-2">
+          <Skeleton className="h-14 w-full" />
+          <Skeleton className="h-14 w-full" />
+          <Skeleton className="h-14 w-full" />
+        </div>
       ) : categories.length === 0 ? (
-        <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
-          <p className="text-gray-600">No categories yet. Add your first category!</p>
+        <div className="bg-white rounded-lg border border-gray-200">
+          <EmptyState
+            icon={Tag}
+            title="No categories yet"
+            description="Categories help group similar items. Add your first one above."
+          />
         </div>
       ) : (
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">

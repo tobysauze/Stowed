@@ -5,6 +5,8 @@ import { supabase } from '@/lib/supabase/client'
 import { LowStockItem } from '@/types/database'
 import Link from 'next/link'
 import { AlertTriangle, Package } from 'lucide-react'
+import { Skeleton } from '@/components/ui/Skeleton'
+import { EmptyState } from '@/components/ui/EmptyState'
 
 export default function LowStockPage() {
   const [items, setItems] = useState<LowStockItem[]>([])
@@ -42,11 +44,18 @@ export default function LowStockPage() {
       </div>
 
       {loading ? (
-        <div className="text-center py-12 text-gray-500">Loading...</div>
+        <div className="space-y-2">
+          <Skeleton className="h-20 w-full" />
+          <Skeleton className="h-20 w-full" />
+          <Skeleton className="h-20 w-full" />
+        </div>
       ) : items.length === 0 ? (
-        <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
-          <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-600">All items are well stocked!</p>
+        <div className="bg-white rounded-lg border border-gray-200">
+          <EmptyState
+            icon={Package}
+            title="All items are well stocked"
+            description="When something drops below its minimum, it'll appear here."
+          />
         </div>
       ) : (
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">

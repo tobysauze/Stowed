@@ -3,8 +3,10 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 import { Category, ItemWithDetails } from '@/types/database'
 import { Upload, X } from 'lucide-react'
+import { Skeleton } from '@/components/ui/Skeleton'
 
 export default function EditItemPage({ params }: { params: { id: string } }) {
   const router = useRouter()
@@ -120,13 +122,18 @@ export default function EditItemPage({ params }: { params: { id: string } }) {
       router.push(`/items/${params.id}`)
     } catch (error: any) {
       console.error('Error updating item:', error)
-      alert('Failed to update item: ' + error.message)
+      toast.error('Failed to update item: ' + error.message)
       setSaving(false)
     }
   }
 
   if (loading) {
-    return <div className="text-center py-12 text-gray-500">Loading...</div>
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-8 w-1/3" />
+        <Skeleton className="h-64 w-full" />
+      </div>
+    )
   }
 
   if (!item) {

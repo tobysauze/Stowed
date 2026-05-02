@@ -1,10 +1,20 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import './globals.css'
+import { Toaster } from 'sonner'
 import { BottomNav } from '@/components/navigation'
 
 export const metadata: Metadata = {
-  title: 'YachtOps Inventory',
-  description: 'Superyacht inventory management system',
+  title: 'Stowed — Inventory',
+  description: 'A clean, modern inventory app for boats, vans and small teams.',
+  applicationName: 'Stowed',
+  appleWebApp: { title: 'Stowed', capable: true, statusBarStyle: 'default' },
+}
+
+export const viewport: Viewport = {
+  themeColor: '#dc2626',
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
 }
 
 export default function RootLayout({
@@ -20,10 +30,9 @@ export default function RootLayout({
             {children}
           </main>
           <BottomNav />
+          <Toaster position="top-center" richColors closeButton />
         </div>
       </body>
     </html>
   )
 }
-
-
