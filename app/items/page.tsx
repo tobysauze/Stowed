@@ -2,26 +2,46 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { Plus, ScanLine, FolderPlus, ArrowUpDown, Search, Package } from 'lucide-react'
+import { Plus, ScanLine, FolderPlus, ArrowUpDown, Search, Package, LayoutGrid, List } from 'lucide-react'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase/client'
 import { TopBar } from '@/components/ui/TopBar'
 import { Fab } from '@/components/ui/Fab'
 import { BottomSheet } from '@/components/ui/BottomSheet'
-import { ItemRowSkeletonList } from '@/components/ui/Skeleton'
+import { ItemRowSkeletonList, Skeleton } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { ItemCard, type ItemListRow } from '@/components/items/ItemCard'
+import { ItemGridCard } from '@/components/items/ItemGridCard'
+import { cn } from '@/lib/utils'
 
 type SortMode = 'name' | 'updated'
+type ViewMode = 'list' | 'grid'
+
+const VIEW_MODE_KEY = 'stowed:itemsViewMode'
 
 export default function ItemsPage() {
   const [items, setItems] = useState<ItemListRow[]>([])
   const [loading, setLoading] = useState(true)
   const [sortMode, setSortMode] = useState<SortMode>('name')
+  const [viewMode, setViewMode] = useState<ViewMode>('list')
   const [sheetOpen, setSheetOpen] = useState(false)
   const [sortSheetOpen, setSortSheetOpen] = useState(false)
   const [activeItem, setActiveItem] = useState<ItemListRow | null>(null)
   const [itemSheetOpen, setItemSheetOpen] = useState(false)
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const saved = window.localStorage.getItem(VIEW_MODE_KEY)
+    if (saved === 'grid' || saved === 'list') setViewMode(saved)
+  }, [])
+
+  const toggleViewMode = () => {
+    const next: ViewMode = viewMode === 'list' ? 'grid' : 'list'
+    setViewMode(next)
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(VIEW_MODE_KEY, next)
+    }
+  }
 
   useEffect(() => {
     load()
@@ -100,6 +120,17 @@ export default function ItemsPage() {
               <Search className="h-5 w-5" />
             </Link>
             <button
+              onClick={toggleViewMode}
+              className="rounded-full p-2 text-gray-600 hover:bg-gray-100"
+              aria-label={viewMode === 'list' ? 'Switch to grid view' : 'Switch to list view'}
+            >
+              {viewMode === 'list' ? (
+                <LayoutGrid className="h-5 w-5" />
+              ) : (
+                <List className="h-5 w-5" />
+              )}
+            </button>
+            <button
               onClick={() => setSortSheetOpen(true)}
               className="rounded-full p-2 text-gray-600 hover:bg-gray-100"
               aria-label="Sort"
@@ -132,8 +163,13 @@ export default function ItemsPage() {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-gray-200 bg-white px-4">
-        <div className="flex items-center justify-between py-3 text-xs text-gray-500">
+      <div className={cn(viewMode === 'list' && 'rounded-2xl border border-gray-200 bg-white px-4')}>
+        <div
+          className={cn(
+            'flex items-center justify-between py-3 text-xs text-gray-500',
+            viewMode === 'grid' && 'mb-2 rounded-2xl border border-gray-200 bg-white px-4'
+          )}
+        >
           <div className="flex items-center gap-2">
             <ArrowUpDown className="h-4 w-4" />
             <span className="capitalize">{sortMode === 'updated' ? 'Last Updated' : 'Name'}</span>
@@ -146,13 +182,27 @@ export default function ItemsPage() {
           </button>
         </div>
         {loading ? (
-          <ItemRowSkeletonList rows={5} />
+          viewMode === 'grid' ? (
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <Skeleton key={i} className="aspect-square w-full rounded-2xl" />
+              ))}
+            </div>
+          ) : (
+            <ItemRowSkeletonList rows={5} />
+          )
         ) : items.length === 0 ? (
           <EmptyState
             icon={Package}
             title="No items yet"
             description="Tap the + button below to add your first item."
           />
+        ) : viewMode === 'grid' ? (
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {items.map((it) => (
+              <ItemGridCard key={it.id} item={it} onOpenMenu={openItemMenu} />
+            ))}
+          </div>
         ) : (
           items.map((it) => <ItemCard key={it.id} item={it} onOpenMenu={openItemMenu} />)
         )}

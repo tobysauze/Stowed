@@ -215,39 +215,67 @@ export default function ItemDetailPage({ params }: { params: { id: string } }) {
       {/* Adjust Stock */}
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <h2 className="text-lg font-semibold mb-4">Adjust Stock</h2>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <select
-            value={adjustForm.location_id}
-            onChange={(e) => setAdjustForm({ ...adjustForm, location_id: e.target.value })}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">Select Location</option>
-            {locations.map((loc) => (
-              <option key={loc.id} value={loc.id}>
-                {loc.name}
-              </option>
-            ))}
-          </select>
-          <input
-            type="number"
-            value={adjustForm.delta || ''}
-            onChange={(e) => setAdjustForm({ ...adjustForm, delta: parseInt(e.target.value) || 0 })}
-            placeholder="Change amount"
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-          />
-          <input
-            type="text"
-            value={adjustForm.reason}
-            onChange={(e) => setAdjustForm({ ...adjustForm, reason: e.target.value })}
-            placeholder="Reason (optional)"
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-          />
+        <div className="space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <select
+              value={adjustForm.location_id}
+              onChange={(e) => setAdjustForm({ ...adjustForm, location_id: e.target.value })}
+              className="rounded-xl border border-gray-300 px-3 py-2.5 focus:border-red-500 focus:ring-2 focus:ring-red-200"
+            >
+              <option value="">Select Location</option>
+              {locations.map((loc) => (
+                <option key={loc.id} value={loc.id}>
+                  {loc.name}
+                </option>
+              ))}
+            </select>
+            <input
+              type="text"
+              value={adjustForm.reason}
+              onChange={(e) => setAdjustForm({ ...adjustForm, reason: e.target.value })}
+              placeholder="Reason (optional)"
+              className="rounded-xl border border-gray-300 px-3 py-2.5 focus:border-red-500 focus:ring-2 focus:ring-red-200"
+            />
+          </div>
+          <div className="flex items-center justify-center gap-3 rounded-xl bg-gray-50 p-3">
+            <button
+              type="button"
+              aria-label="Decrease"
+              onClick={() => setAdjustForm({ ...adjustForm, delta: adjustForm.delta - 1 })}
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-gray-700 shadow-sm ring-1 ring-gray-200 hover:bg-gray-100 active:scale-95"
+            >
+              <Minus className="h-5 w-5" />
+            </button>
+            <input
+              type="number"
+              value={adjustForm.delta || ''}
+              onChange={(e) =>
+                setAdjustForm({ ...adjustForm, delta: parseInt(e.target.value) || 0 })
+              }
+              placeholder="0"
+              className="w-24 rounded-xl border border-gray-300 px-3 py-2 text-center text-lg font-semibold tabular-nums focus:border-red-500 focus:ring-2 focus:ring-red-200"
+            />
+            <button
+              type="button"
+              aria-label="Increase"
+              onClick={() => setAdjustForm({ ...adjustForm, delta: adjustForm.delta + 1 })}
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-gray-700 shadow-sm ring-1 ring-gray-200 hover:bg-gray-100 active:scale-95"
+            >
+              <Plus className="h-5 w-5" />
+            </button>
+          </div>
           <button
             onClick={handleAdjustStock}
             disabled={adjusting || !adjustForm.location_id || adjustForm.delta === 0}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            className="w-full rounded-xl bg-red-600 px-4 py-2.5 font-semibold text-white hover:bg-red-700 disabled:opacity-50"
           >
-            {adjusting ? 'Adjusting...' : 'Apply'}
+            {adjusting
+              ? 'Applying…'
+              : adjustForm.delta === 0
+                ? 'Set quantity change'
+                : adjustForm.delta > 0
+                  ? `Add ${adjustForm.delta} ${item.unit}`
+                  : `Remove ${Math.abs(adjustForm.delta)} ${item.unit}`}
           </button>
         </div>
       </div>
@@ -263,11 +291,29 @@ export default function ItemDetailPage({ params }: { params: { id: string } }) {
               const newMin = parseFloat(e.target.value) || 0
               handleUpdateMinRequired(newMin)
             }}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 w-32"
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 w-32"
           />
           <span className="text-gray-600">{item.unit}</span>
         </div>
       </div>
+
+      <button
+        onClick={async () => {
+          const ok = window.confirm(`Delete "${item.name}"? This cannot be undone.`)
+          if (!ok) return
+          const { error } = await supabase.from('item').delete().eq('id', params.id)
+          if (error) {
+            toast.error('Delete failed: ' + error.message)
+            return
+          }
+          toast.success(`Deleted "${item.name}"`)
+          router.push('/items')
+        }}
+        className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-3 text-sm font-semibold text-red-700 hover:bg-red-50"
+      >
+        <Trash2 className="h-4 w-4" />
+        Delete item
+      </button>
     </div>
   )
 }
